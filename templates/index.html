@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Clipper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+    <header class="border-b border-slate-800 bg-slate-900/50 p-4 text-center">
+        <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">ClipCraft AI Live</h1>
+    </header>
+    <main class="flex-grow max-w-xl mx-auto px-4 py-8 w-full">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+            <form id="clipForm" class="space-y-4">
+                <label class="block text-sm font-semibold text-slate-300">Paste Video Link</label>
+                <input type="url" id="videoUrl" required placeholder="https://www.youtube.com/watch?v=..." 
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-purple-500 text-sm">
+                <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Cut Clips with AI</span>
+                </button>
+            </form>
+        </div>
+        <div id="loading" class="hidden text-center py-12">
+            <i class="fa-solid fa-circle-notch animate-spin text-purple-500 text-3xl mb-2"></i>
+            <p class="text-slate-400 text-sm">Processing video on server...</p>
+        </div>
+        <div id="results" class="hidden mt-6 space-y-4">
+            <h2 class="font-bold text-lg">Generated Clips</h2>
+            <div id="clipsContainer" class="space-y-3"></div>
+        </div>
+    </main>
+    <script>
+        document.getElementById('clipForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const url = document.getElementById('videoUrl').value;
+            document.getElementById('clipForm').parentElement.classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+                const data = await response.json();
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+                const container = document.getElementById('clipsContainer');
+                container.innerHTML = '';
+                data.clips.forEach(clip => {
+                    container.innerHTML += `
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center">
+                            <div>
+                                <span class="text-xs text-purple-400 font-mono">${clip.time} (Score: ${clip.score})</span>
+                                <h4 class="font-bold text-sm text-slate-200">${clip.title}</h4>
+                            </div>
+                            <button onclick="alert('Download started!')" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg text-xs font-semibold">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                alert('Something went wrong!');
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
